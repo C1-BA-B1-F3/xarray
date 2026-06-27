@@ -1400,6 +1400,20 @@ def test_apply_dask_new_output_sizes_not_supplied_same_dim_names() -> None:
         )
 
 
+def test_pinv_coords_transposed():
+    # GH#11396: np.linalg.pinv transposes last two axes, coords should follow
+    m1 = xr.DataArray(
+        np.arange(12).reshape(3, 4),
+        dims=["foo", "bar"],
+        coords={"foo": ["x", "y", "z"], "bar": ["a", "b", "c", "d"]},
+    )
+    m2 = np.linalg.pinv(m1)
+    assert m2.shape == (4, 3)
+    assert m2.dims == ("bar", "foo")
+    assert list(m2.coords["foo"].values) == ["x", "y", "z"]
+    assert list(m2.coords["bar"].values) == ["a", "b", "c", "d"]
+
+
 def pandas_median(x):
     return pd.Series(x).median()
 

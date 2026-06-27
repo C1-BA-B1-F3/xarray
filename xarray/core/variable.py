@@ -2432,6 +2432,19 @@ class Variable(NamedArray, AbstractArray, VariableArithmetic):
         return self._new(data=self.data.real)
 
     def __array_wrap__(self, obj, context=None, return_scalar=False):
+        if obj.shape == self.shape:
+            return Variable(self.dims, obj)
+        # Handle shape changes where only the last two dims are swapped
+        # (e.g. np.linalg.pinv transposes last two axes)
+        if (
+            obj.ndim == self.ndim
+            and obj.ndim >= 2
+            and obj.shape[:-2] == self.shape[:-2]
+            and obj.shape[-2:] == self.shape[-2:][::-1]
+        ):
+            new_dims = list(self.dims)
+            new_dims[-2], new_dims[-1] = new_dims[-1], new_dims[-2]
+            return Variable(tuple(new_dims), obj)
         return Variable(self.dims, obj)
 
     def _unary_op(self, f, *args, **kwargs):
